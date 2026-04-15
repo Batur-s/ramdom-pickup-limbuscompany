@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  nickName  String
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userIdentities UserIdentities[]
+  games          Games[]
+}
+
+model UserIdentities {
+  id         String @id @default(cuid())
+  userId     String
+  identityId String
+  syncGrade  Int    @default(1)
+
+  user     User       @relation(fields: [userId], references: [id])
+  identity Identities @relation(fields: [identityId], references: [id])
+
+  gameDecks GameDecks[]
+}
+
+model Identities {
+  id       String @id @default(cuid())
+  name     String
+  sinnerId String
+  grade    Int
+
+  sinner         Sinners          @relation(fields: [sinnerId], references: [id])
+  userIdentities UserIdentities[]
+}
+
+model Sinners {
+  id   String @id @default(cuid())
+  name String @unique
+
+  identities Identities[]
+}
+
+model GameDecks {
+  id             String @id @default(cuid())
+  gameId         String
+  userIdentityId String
+
+  games          Games          @relation(fields: [gameId], references: [id])
+  userIdentities UserIdentities @relation(fields: [userIdentityId], references: [id])
+}
+
+model Games {
+  id           String     @id @default(cuid())
+  status       GameStatus @default(PAUSE)
+  currentFloor Int        @default(1)
+  title        String
+  userId       String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user       User         @relation(fields: [userId], references: [id])
+  gameDecks  GameDecks[]
+  gameFloors GameFloors[]
+}
+
+model GameFloors {
+  id     String @id @default(cuid())
+  gameId String @unique
+
+  games  Games    @relation(fields: [gameId], references: [id])
+  floors Floors[]
+}
+
+model Floors {
+  id           String @id @default(cuid())
+  name         String
+  gameFloorsId String
+
+  gameFloors       GameFloors        @relation(fields: [gameFloorsId], references: [id])
+  floorInventories FloorInventories?
+}
+
+model FloorInventories {
+  id         String  @id @default(cuid())
+  giftStatus Boolean
+  floorId    String  @unique
+
+  floors   Floors     @relation(fields: [floorId], references: [id])
+  egoGifts EgoGifts[]
+}
+
+model EgoGifts {
+  id                  String  @id @default(cuid())
+  name                String
+  tier                Int
+  keyword             Boolean
+  type                Boolean
+  floor_inventoriesId String
+
+  floorInventories FloorInventories @relation(fields: [floor_inventoriesId], references: [id])
+}
+
+// --- Enums ---
+
+enum GameStatus {
+  CLEAR
+  FAILURE
+  PAUSE
+}
+
+enum GiftStatus {
+  BOUGHT
+  SOLD
+  FUSED
+}
+
+enum Keyword {
+  BURN
+  BLEED
+  TREMOR
+  RUPTURE
+  SINKING
+  POISE
+  CHARGE
+  SLASH
+  PIERCE
+  BLUNT
+}
+
+enum Type {
+  NORMAL
+  FUSION
+  UNIQUE
+  HIDDEN
+}
