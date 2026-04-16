@@ -10,18 +10,23 @@ generator client {
 // schema.prisma
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  nickName  String
-  password  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  provider   String
+  providerId String
+  email      String   @unique
+  nickName   String
+  password   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   userIdentities UserIdentities[]
   games          Games[]
+
+  @@unique([provider, providerId])
 }
 
 model UserIdentities {
