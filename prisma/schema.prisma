@@ -1,13 +1,10 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file.
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -19,52 +16,48 @@ model User {
   providerId String
   email      String   @unique
   nickName   String
+  isNewUser  Boolean  @default(true)
   password   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  userIdentities UserIdentities[]
-  games          Games[]
+  userIdentity UserIdentity[]
+  games        Games[]
 
   @@unique([provider, providerId])
 }
 
-model UserIdentities {
+model UserIdentity {
   id         String @id @default(cuid())
   userId     String
   identityId String
   syncGrade  Int    @default(1)
 
-  user     User       @relation(fields: [userId], references: [id])
-  identity Identities @relation(fields: [identityId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  identity Identity @relation(fields: [identityId], references: [id])
 
+  // (덱 슬롯 기반으로 바꾸는 경우 GameDeckSlots만 유지하고 GameDecks는 제거 가능)
   gameDecks GameDecks[]
 }
 
-model Identities {
-  id       String @id @default(cuid())
+model Identity {
+  id       String  @id @default(cuid())
   name     String
   sinnerId String
   grade    Int
+  tier     Tier
+  imageUrl String?
 
-  sinner         Sinners          @relation(fields: [sinnerId], references: [id])
-  userIdentities UserIdentities[]
+  sinner            Sinners             @relation(fields: [sinnerId], references: [id])
+  userIdentity      UserIdentity[]
+  gameRerollResults GameRerollResults[]
 }
 
 model Sinners {
   id   String @id @default(cuid())
   name String @unique
 
-  identities Identities[]
-}
-
-model GameDecks {
-  id             String @id @default(cuid())
-  gameId         String
-  userIdentityId String
-
-  games          Games          @relation(fields: [gameId], references: [id])
-  userIdentities UserIdentities @relation(fields: [userIdentityId], references: [id])
+  identity Identity[]
 }
 
 model Games {
@@ -76,34 +69,64 @@ model Games {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  user       User         @relation(fields: [userId], references: [id])
-  gameDecks  GameDecks[]
-  gameFloors GameFloors[]
+  user User @relation(fields: [userId], references: [id])
+
+  // (게임 시작 시 덱 편성 기록; 슬롯 모델로 갈 경우 구조 정리 권장)
+  gameDecks GameDecks[]
+
+  // 층/스테이지 실행 기록
+  gameFloorRuns GameFloorRuns[]
+
+  // 유저가 게임 중 보유한 에고 기프트
+  gameEgoGifts GameEgoGifts[]
+
+  // 층 보상 선택 기록
+  gameFloorRewards GameFloorRewards[]
+
+  // 리롤 기록
+  gameRerolls GameRerolls[]
 }
 
-model GameFloors {
-  id     String @id @default(cuid())
-  gameId String @unique
+// 덱(초기 버전): 기존을 유지. 리롤 교체가 중요해지면 GameDecks를 슬롯 모델로 교체 권장.
+model GameDecks {
+  id             String @id @default(cuid())
+  gameId         String
+  userIdentityId String
 
-  games  Games    @relation(fields: [gameId], references: [id])
-  floors Floors[]
+  games        Games        @relation(fields: [gameId], references: [id])
+  userIdentity UserIdentity @relation(fields: [userIdentityId], references: [id])
+
+  @@index([gameId])
 }
 
 model Floors {
-  id           String @id @default(cuid())
-  name         String
-  gameFloorsId String
+  id   String @id @default(cuid())
+  name String
 
-  gameFloors       GameFloors        @relation(fields: [gameFloorsId], references: [id])
-  floorInventories FloorInventories?
+  // 마스터: floor -> stages
+  stages Stages[]
 }
 
-model FloorInventories {
-  id         String  @id @default(cuid())
-  giftStatus Boolean
-  floorId    String  @unique
+model Stages {
+  id      String @id @default(cuid())
+  floorId String
+  name    String
 
-  floors   Floors     @relation(fields: [floorId], references: [id])
+  floor Floors @relation(fields: [floorId], references: [id])
+
+  // 스테이지별 보상풀(스테이지 고유 EGO-GIFT)
+  stageInventory StageInventories?
+
+  // 런에서 선택된 스테이지
+  gameFloorRuns GameFloorRuns[]
+}
+
+model StageInventories {
+  id      String @id @default(cuid())
+  stageId String @unique
+
+  stage Stages @relation(fields: [stageId], references: [id])
+
   egoGifts EgoGifts[]
 }
 
@@ -111,14 +134,109 @@ model EgoGifts {
   id                  String  @id @default(cuid())
   name                String
   tier                Int
-  keyword             Boolean
-  type                Boolean
-  floor_inventoriesId String
+  keyword             Keyword
+  type                Type
+  // stage 보상풀에 종속
+  stage_inventoriesId String
 
-  floorInventories FloorInventories @relation(fields: [floor_inventoriesId], references: [id])
+  stageInventory   StageInventories   @relation(fields: [stage_inventoriesId], references: [id])
+  gameEgoGifts     GameEgoGifts[]
+  gameFloorRewards GameFloorRewards[]
 }
 
-// --- Enums ---
+model GameFloorRuns {
+  id          String @id @default(cuid())
+  gameId      String
+  floorNumber Int
+  stageId     String
+
+  status    GameStatus @default(PAUSE)
+  createdAt DateTime   @default(now())
+  clearedAt DateTime?
+
+  game  Games  @relation(fields: [gameId], references: [id])
+  stage Stages @relation(fields: [stageId], references: [id])
+
+  // 해당 층에서 선택된 보상
+  rewards GameFloorRewards[]
+
+  @@unique([gameId, floorNumber])
+}
+
+model GameEgoGifts {
+  id        String @id @default(cuid())
+  gameId    String
+  egoGiftId String
+
+  status     GiftStatus @default(BOUGHT)
+  acquiredAt DateTime   @default(now())
+  usedAt     DateTime?
+
+  game    Games    @relation(fields: [gameId], references: [id])
+  egoGift EgoGifts @relation(fields: [egoGiftId], references: [id])
+
+  gameFloorRewards GameFloorRewards[]
+
+  @@unique([gameId, egoGiftId])
+}
+
+model GameFloorRewards {
+  id             String @id @default(cuid())
+  gameFloorRunId String
+  egoGiftId      String
+
+  // BOUGHT/SOLD/FUSED 중에서 선택 의미를 정해 쓰면 됨
+  action    GiftStatus
+  createdAt DateTime   @default(now())
+
+  gameFloorRun GameFloorRuns @relation(fields: [gameFloorRunId], references: [id])
+  egoGift      EgoGifts      @relation(fields: [egoGiftId], references: [id])
+
+  // 게임 보유 상태와도 연결(필요시)
+  gameEgoGiftId String?
+  gameEgoGift   GameEgoGifts? @relation(fields: [gameEgoGiftId], references: [id])
+  games         Games?        @relation(fields: [gamesId], references: [id])
+  gamesId       String?
+
+  @@unique([gameFloorRunId, egoGiftId])
+}
+
+model GameRerolls {
+  id          String   @id @default(cuid())
+  gameId      String
+  floorNumber Int?
+  rerollIndex Int
+  createdAt   DateTime @default(now())
+
+  // 확률/가중치 모델 버전/재현을 위해(옵션)
+  probabilityModelVersion Int?
+  seed                    String?
+
+  game    Games               @relation(fields: [gameId], references: [id])
+  results GameRerollResults[]
+
+  @@index([gameId, floorNumber])
+}
+
+model GameRerollResults {
+  id         String @id @default(cuid())
+  rerollId   String
+  identityId String
+
+  rolledTier Tier
+  rankInRoll Int?
+
+  // 이 결과를 덱의 어떤 슬롯에 “적용”했는지 기록(슬롯 모델이 있어야 정확)
+  // 현재는 덱 슬롯 테이블을 아직 정의하지 않았으므로 컬럼만 둔다.
+  appliedToDeckSlotId String?
+
+  reroll   GameRerolls @relation(fields: [rerollId], references: [id])
+  identity Identity    @relation(fields: [identityId], references: [id])
+
+  @@index([identityId])
+}
+
+//// --- Enums ---
 
 enum GameStatus {
   CLEAR
@@ -150,4 +268,13 @@ enum Type {
   FUSION
   UNIQUE
   HIDDEN
+}
+
+enum Tier {
+  S
+  A
+  B
+  C
+  D
+  E
 }

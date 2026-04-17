@@ -37,6 +37,6 @@
     "moduleDetection": "force"
   },
 
-  "include": ["src"],
+  "include": ["src/**/*", "src/@types/*.d.ts"],
   "exclude": ["dist", "node_modules"]
 }
