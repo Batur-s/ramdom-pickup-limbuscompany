@@ -38,6 +38,8 @@ model UserIdentity {
 
   // (덱 슬롯 기반으로 바꾸는 경우 GameDeckSlots만 유지하고 GameDecks는 제거 가능)
   gameDecks GameDecks[]
+
+  @@unique([userId, identityId])
 }
 
 model Identity {
@@ -92,10 +94,12 @@ model GameDecks {
   id             String @id @default(cuid())
   gameId         String
   userIdentityId String
+  sinnerId       String
 
   games        Games        @relation(fields: [gameId], references: [id])
   userIdentity UserIdentity @relation(fields: [userIdentityId], references: [id])
 
+  @@unique([gameId, sinnerId])
   @@index([gameId])
 }
 
