@@ -36,7 +36,6 @@ model UserIdentity {
   user     User     @relation(fields: [userId], references: [id])
   identity Identity @relation(fields: [identityId], references: [id])
 
-  // (덱 슬롯 기반으로 바꾸는 경우 GameDeckSlots만 유지하고 GameDecks는 제거 가능)
   gameDecks GameDecks[]
 
   @@unique([userId, identityId])
@@ -73,19 +72,10 @@ model Games {
 
   user User @relation(fields: [userId], references: [id])
 
-  // (게임 시작 시 덱 편성 기록; 슬롯 모델로 갈 경우 구조 정리 권장)
   gameDecks GameDecks[]
 
-  // 층/스테이지 실행 기록
-  gameFloorRuns GameFloorRuns[]
+  gameStages GameStages[]
 
-  // 유저가 게임 중 보유한 에고 기프트
-  gameEgoGifts GameEgoGifts[]
-
-  // 층 보상 선택 기록
-  gameFloorRewards GameFloorRewards[]
-
-  // 리롤 기록
   gameRerolls GameRerolls[]
 }
 
@@ -103,112 +93,34 @@ model GameDecks {
   @@index([gameId])
 }
 
-model Floors {
-  id   String @id @default(cuid())
-  name String
-
-  // 마스터: floor -> stages
-  stages Stages[]
-}
-
 model Stages {
+  id           String @id @default(cuid())
+  normalFloorA Int?
+  normalFloorB Int?
+  hardFloorA   Int?
+  hardFloorB   Int?
+  name         String
+
+  gameStages GameStages[]
+}
+
+model GameStages {
   id      String @id @default(cuid())
-  floorId String
-  name    String
+  gameId  String
+  stageId String
+  floor   Int
 
-  floor Floors @relation(fields: [floorId], references: [id])
+  games  Games  @relation(fields: [gameId], references: [id])
+  stages Stages @relation(fields: [stageId], references: [id])
 
-  // 스테이지별 보상풀(스테이지 고유 EGO-GIFT)
-  stageInventory StageInventories?
-
-  // 런에서 선택된 스테이지
-  gameFloorRuns GameFloorRuns[]
-}
-
-model StageInventories {
-  id      String @id @default(cuid())
-  stageId String @unique
-
-  stage Stages @relation(fields: [stageId], references: [id])
-
-  egoGifts EgoGifts[]
-}
-
-model EgoGifts {
-  id                  String  @id @default(cuid())
-  name                String
-  tier                Int
-  keyword             Keyword
-  type                Type
-  // stage 보상풀에 종속
-  stage_inventoriesId String
-
-  stageInventory   StageInventories   @relation(fields: [stage_inventoriesId], references: [id])
-  gameEgoGifts     GameEgoGifts[]
-  gameFloorRewards GameFloorRewards[]
-}
-
-model GameFloorRuns {
-  id          String @id @default(cuid())
-  gameId      String
-  floorNumber Int
-  stageId     String
-
-  status    GameStatus @default(PAUSE)
-  createdAt DateTime   @default(now())
-  clearedAt DateTime?
-
-  game  Games  @relation(fields: [gameId], references: [id])
-  stage Stages @relation(fields: [stageId], references: [id])
-
-  // 해당 층에서 선택된 보상
-  rewards GameFloorRewards[]
-
-  @@unique([gameId, floorNumber])
-}
-
-model GameEgoGifts {
-  id        String @id @default(cuid())
-  gameId    String
-  egoGiftId String
-
-  status     GiftStatus @default(BOUGHT)
-  acquiredAt DateTime   @default(now())
-  usedAt     DateTime?
-
-  game    Games    @relation(fields: [gameId], references: [id])
-  egoGift EgoGifts @relation(fields: [egoGiftId], references: [id])
-
-  gameFloorRewards GameFloorRewards[]
-
-  @@unique([gameId, egoGiftId])
-}
-
-model GameFloorRewards {
-  id             String @id @default(cuid())
-  gameFloorRunId String
-  egoGiftId      String
-
-  // BOUGHT/SOLD/FUSED 중에서 선택 의미를 정해 쓰면 됨
-  action    GiftStatus
-  createdAt DateTime   @default(now())
-
-  gameFloorRun GameFloorRuns @relation(fields: [gameFloorRunId], references: [id])
-  egoGift      EgoGifts      @relation(fields: [egoGiftId], references: [id])
-
-  // 게임 보유 상태와도 연결(필요시)
-  gameEgoGiftId String?
-  gameEgoGift   GameEgoGifts? @relation(fields: [gameEgoGiftId], references: [id])
-  games         Games?        @relation(fields: [gamesId], references: [id])
-  gamesId       String?
-
-  @@unique([gameFloorRunId, egoGiftId])
+  @@unique([gameId, stageId])
+  @@index([gameId])
 }
 
 model GameRerolls {
   id          String   @id @default(cuid())
   gameId      String
-  floorNumber Int?
+  floor       Int?
   rerollIndex Int
   createdAt   DateTime @default(now())
 
@@ -219,7 +131,7 @@ model GameRerolls {
   game    Games               @relation(fields: [gameId], references: [id])
   results GameRerollResults[]
 
-  @@index([gameId, floorNumber])
+  @@index([gameId, floor])
 }
 
 model GameRerollResults {
@@ -230,8 +142,6 @@ model GameRerollResults {
   rolledTier Tier
   rankInRoll Int?
 
-  // 이 결과를 덱의 어떤 슬롯에 “적용”했는지 기록(슬롯 모델이 있어야 정확)
-  // 현재는 덱 슬롯 테이블을 아직 정의하지 않았으므로 컬럼만 둔다.
   appliedToDeckSlotId String?
 
   reroll   GameRerolls @relation(fields: [rerollId], references: [id])
@@ -246,33 +156,6 @@ enum GameStatus {
   CLEAR
   FAILURE
   PAUSE
-}
-
-enum GiftStatus {
-  BOUGHT
-  SOLD
-  FUSED
-}
-
-enum Keyword {
-  BURN
-  BLEEDING
-  VIBRATION
-  RUPTURE
-  SUBMERGED
-  BREATH
-  CHARGE
-  SLASH
-  PIERCE
-  BLUNT
-  UNIVERSAL
-}
-
-enum Type {
-  NORMAL
-  FUSION
-  UNIQUE
-  HIDDEN
 }
 
 enum Tier {

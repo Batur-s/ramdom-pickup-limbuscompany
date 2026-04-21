@@ -17,13 +17,16 @@ passport.use(
 
         if (!email) return done(new Error('No email found'));
 
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true },
+        });
+
         const user = await prisma.user.upsert({
           where: {
-            // 이메일을 기준으로 찾을지, provider 조합으로 찾을지 결정 (이메일 추천)
             email: email,
           },
           update: {
-            // 로그인할 때마다 이름 정도는 최신화해줄 수 있습니다.
             nickName: profile.displayName,
           },
           create: {
@@ -33,7 +36,21 @@ passport.use(
             providerId: providerId,
           },
         });
+        if (!existingUser) {
+          const defaultIdentities = await prisma.identity.findMany({
+            where: { grade: 1 },
+            select: { id: true },
+          });
 
+          await prisma.userIdentity.createMany({
+            data: defaultIdentities.map((i) => ({
+              userId: user.id,
+              identityId: i.id,
+              syncGrade: 1,
+            })),
+            skipDuplicates: true,
+          });
+        }
         console.log(user ? `✅ 유저 확인: ${user.email}` : `🆕 신규 등록`);
         return done(null, user);
       } catch (error) {

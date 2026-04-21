@@ -1,5 +1,20 @@
 import { PrismaClient, Tier } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+
 const prisma = new PrismaClient();
+
+function readIdentitiesJson() {
+  const filePath = path.join(process.cwd(), 'prisma', 'seed-data', 'identities.json');
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(raw) as Array<{
+    id: string;
+    name: string;
+    sinnerId: string;
+    grade: number;
+    tier: keyof typeof Tier;
+  }>;
+}
 
 async function main() {
   console.log('🌱 시딩 시작...');
@@ -27,101 +42,24 @@ async function main() {
   }
   console.log('👥 수감자 데이터 완료');
 
-  const identitiesData = [
-    {
-      id: 'id-1',
-      name: '검계 살수 이상',
-      sinnerId: 'sinner-1', // 위에서 만든 수감자 ID와 연결
-      grade: 3,
-      tier: Tier.S, // Prisma Enum 사용
-    },
-    {
-      id: 'id-2',
-      name: '쥐는 자 파우스트',
-      sinnerId: 'sinner-2',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-3',
-      name: 'W사 3등급 정리 요원 돈키호테',
-      sinnerId: 'sinner-3',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-4',
-      name: '흑운회 와카슈 로슈',
-      sinnerId: 'sinner-4',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-5',
-      name: 'W사 2등급 정리 요원 뫼르소',
-      sinnerId: 'sinner-5',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-6',
-      name: '콩콩이파 두목 홍루',
-      sinnerId: 'sinner-6',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-7',
-      name: 'R사 제 4무리 토끼팀 히스클리프',
-      sinnerId: 'sinner-7',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-8',
-      name: 'R사 제 4무리 순록팀 이스마엘',
-      sinnerId: 'sinner-8',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-9',
-      name: '흑운회 와카슈 로쟈',
-      sinnerId: 'sinner-9',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-10',
-      name: '검계 살수 싱클레어',
-      sinnerId: 'sinner-10',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-11',
-      name: '남부 세븐 협회 6과 부장 오티스',
-      sinnerId: 'sinner-11',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-12',
-      name: 'G사 일등대리 그레고르',
-      sinnerId: 'sinner-12',
-      grade: 3,
-      tier: Tier.S,
-    },
-  ];
+  const identitiesData = readIdentitiesJson();
 
   for (const identity of identitiesData) {
     await prisma.identity.upsert({
       where: { id: identity.id },
       update: {
         name: identity.name,
-        tier: identity.tier,
+        sinnerId: identity.sinnerId,
+        grade: identity.grade,
+        tier: identity.tier as Tier,
       },
-      create: identity,
+      create: {
+        id: identity.id,
+        name: identity.name,
+        sinnerId: identity.sinnerId,
+        grade: identity.grade,
+        tier: identity.tier as Tier,
+      },
     });
   }
 
@@ -130,9 +68,8 @@ async function main() {
 
 main()
   .catch((e) => {
-    // Prisma 에러인지 일반 에러인지 구분해서 출력해줍니다.
     console.error('❌ 시딩 중 에러 발생:');
-    console.error(e.message);
+    console.error((e as Error).message);
     process.exit(1);
   })
   .finally(async () => {
