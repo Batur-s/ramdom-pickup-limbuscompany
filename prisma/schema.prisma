@@ -256,15 +256,16 @@ enum GiftStatus {
 
 enum Keyword {
   BURN
-  BLEED
-  TREMOR
+  BLEEDING
+  VIBRATION
   RUPTURE
-  SINKING
-  POISE
+  SUBMERGED
+  BREATH
   CHARGE
   SLASH
   PIERCE
   BLUNT
+  UNIVERSAL
 }
 
 enum Type {
