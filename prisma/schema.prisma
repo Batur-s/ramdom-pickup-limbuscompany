@@ -21,8 +21,9 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  userIdentity UserIdentity[]
-  games        Games[]
+  userIdentity      UserIdentity[]
+  games             Games[]
+  gameRerollResults GameRerollResults[]
 
   @@unique([provider, providerId])
 }
@@ -86,8 +87,9 @@ model GameDecks {
   userIdentityId String
   sinnerId       String
 
-  games        Games        @relation(fields: [gameId], references: [id])
-  userIdentity UserIdentity @relation(fields: [userIdentityId], references: [id])
+  games             Games               @relation(fields: [gameId], references: [id])
+  userIdentity      UserIdentity        @relation(fields: [userIdentityId], references: [id])
+  gameRerollResults GameRerollResults[]
 
   @@unique([gameId, sinnerId])
   @@index([gameId])
@@ -105,10 +107,11 @@ model Stages {
 }
 
 model GameStages {
-  id      String @id @default(cuid())
-  gameId  String
-  stageId String
-  floor   Int
+  id        String     @id @default(cuid())
+  gameId    String
+  stageId   String
+  floor     Int
+  diffculty Difficulty
 
   games  Games  @relation(fields: [gameId], references: [id])
   stages Stages @relation(fields: [stageId], references: [id])
@@ -120,34 +123,41 @@ model GameStages {
 model GameRerolls {
   id          String   @id @default(cuid())
   gameId      String
-  floor       Int?
-  rerollIndex Int
+  floorNumber Int? 
+  rerollIndex Int 
   createdAt   DateTime @default(now())
 
-  // 확률/가중치 모델 버전/재현을 위해(옵션)
   probabilityModelVersion Int?
   seed                    String?
 
   game    Games               @relation(fields: [gameId], references: [id])
   results GameRerollResults[]
 
-  @@index([gameId, floor])
+  @@index([gameId, floorNumber])
+  @@index([gameId, rerollIndex])
 }
 
 model GameRerollResults {
-  id         String @id @default(cuid())
-  rerollId   String
-  identityId String
+  id String @id @default(cuid())
 
-  rolledTier Tier
-  rankInRoll Int?
+  rerollId       String
+  identityId     String 
+  userIdentityId String 
+  rankInRoll     Int?
 
-  appliedToDeckSlotId String?
+  appliedAt       DateTime?
+  appliedToDeckId String?
 
   reroll   GameRerolls @relation(fields: [rerollId], references: [id])
   identity Identity    @relation(fields: [identityId], references: [id])
+  user     User        @relation(fields: [userIdentityId], references: [id])
 
+  appliedToDeck GameDecks? @relation(fields: [appliedToDeckId], references: [id])
+
+  @@unique([rerollId, identityId])
   @@index([identityId])
+  @@index([userIdentityId])
+  @@index([appliedToDeckId])
 }
 
 //// --- Enums ---
@@ -165,4 +175,9 @@ enum Tier {
   C
   D
   E
+}
+
+enum Difficulty {
+  NORMAL
+  HARD
 }
