@@ -21,4 +21,35 @@ export const gamesController = {
 
     return res.status(201).json(result);
   },
+
+  async getGameDeck(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+
+    const deck = await gamesService.getGameDeckByGameId({
+      userId,
+      gameId,
+    });
+
+    return res.json({ items: deck });
+  },
+
+  async createReroll(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameIdParam = req.params.gameId;
+    const gameId = Array.isArray(gameIdParam) ? gameIdParam[0] : gameIdParam;
+
+    if (!gameId) return res.status(400).json({ message: 'gameId is required' });
+
+    const result = await gamesService.createRerollForGame({
+      userId,
+      gameId,
+    });
+
+    return res.status(201).json(result);
+  },
 };

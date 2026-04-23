@@ -4,6 +4,17 @@ import { gamesRepository } from './game.repositories';
 
 type DeckSlotInput = { sinnerId: string; userIdentityId: string };
 
+type CreateRerollInput = { userId: string; gameId: string };
+
+const tierWeight: Record<string, number> = {
+  S: 5,
+  A: 4,
+  B: 3,
+  C: 2,
+  D: 1,
+  E: 1,
+};
+
 export const gamesService = {
   async createGame({
     userId,
@@ -41,7 +52,18 @@ export const gamesService = {
     });
   },
 
-  async rerollIdentities({ userId, deck }: { userId: string; deck: DeckSlotInput[] }) {
-    if (!deck || !Array.isArray(deck)) throw new Error('deck is required');
+  async getGameDeckByGameId({ userId, gameId }: { userId: string; gameId: string }) {
+    const game = await gamesRepository.findGameOwnedByUser({ userId, gameId });
+    if (!game) throw new Error('Game not found');
+
+    const deck = await gamesRepository.getDeckIttemsForGame({ gameId });
+
+    deck.sort((a, b) => a.sinnerId.localeCompare(b.sinnerId));
+
+    return deck;
+  },
+
+  async createRerollForGame({ userId, gameId }: CreateRerollInput) {
+    return gamesRepository.createRerollWithCandidates({ userId, gameId, tierWeight });
   },
 };
