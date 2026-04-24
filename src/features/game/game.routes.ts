@@ -6,3 +6,5 @@ import { gamesController } from './game.controllers';
 export const gamesRouter = Router();
 
 gamesRouter.post('/', requireAuth, gamesController.createGame);
+gamesRouter.get('/:gameId/deck', requireAuth, gamesController.getGameDeck);
+gamesRouter.post('/:gameId/reroll', requireAuth, gamesController.createReroll);
