@@ -6,6 +6,13 @@ type DeckSlotInput = { sinnerId: string; userIdentityId: string };
 
 type CreateRerollInput = { userId: string; gameId: string };
 
+type UpdateRerollInput = {
+  userId: string;
+  gameId: string;
+  rerollId: string;
+  selectUserIdentityId: string;
+};
+
 const tierWeight: Record<string, number> = {
   S: 5,
   A: 4,
@@ -65,5 +72,9 @@ export const gamesService = {
 
   async createRerollForGame({ userId, gameId }: CreateRerollInput) {
     return gamesRepository.createRerollWithCandidates({ userId, gameId, tierWeight });
+  },
+
+  async updateRerollForGame({ userId, gameId, rerollId, selectUserIdentityId }: UpdateRerollInput) {
+    return gamesRepository.UpdateRerollInput({ userId, gameId, rerollId, selectUserIdentityId });
   },
 };

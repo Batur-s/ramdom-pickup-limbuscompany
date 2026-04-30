@@ -1,4 +1,5 @@
 // features/game/game.repositories.ts
+import { truncate } from 'fs';
 import prisma from '../../lib/prisma';
 import { PrismaClient } from '@prisma/client';
 
@@ -204,6 +205,96 @@ export const gamesRepository = {
         rankInRoll: p.rankInRoll,
         rolledTier: p.tier,
       })),
+    };
+  },
+
+  async UpdateRerollInput({
+    userId,
+    gameId,
+    rerollId,
+    selectUserIdentityId,
+  }: {
+    userId: string;
+    gameId: string;
+    rerollId: string;
+    selectUserIdentityId: string;
+  }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: { id: true, currentFloor: true },
+    });
+    if (!game) throw new Error('Game not found');
+
+    const selectResult = await prisma.gameRerollResults.findFirst({
+      where: { rerollId, userIdentityId: selectUserIdentityId },
+      select: {
+        identityId: true,
+        userIdentityId: true,
+        identity: {
+          select: {
+            sinnerId: true,
+          },
+        },
+      },
+    });
+
+    if (!selectResult) throw new Error('Select result not found');
+    const targetSinnerId = selectResult.identity.sinnerId;
+
+    // const updated = await prisma.gameDecks.update({
+    //   where: {
+    //     gameId_sinnerId: {
+    //       gameId,
+    //       sinnerId: targetSinnerId,
+    //     },
+    //   },
+    //   data: {
+    //     userIdentityId: selectUserIdentityId,
+    //   },
+    //   select: {
+    //     id: true,
+    //     gameId: true,
+    //     sinnerId: true,
+    //     userIdentityId: true,
+    //   },
+    // });
+    const deckRow = await prisma.gameDecks.findFirst({
+      where: { gameId, sinnerId: targetSinnerId },
+      select: { id: true },
+    });
+
+    if (!deckRow) throw new Error('Deck slot not found for (gameId, sinnerId)');
+
+    const updated = await prisma.gameDecks.update({
+      where: { id: deckRow.id },
+      data: { userIdentityId: selectUserIdentityId },
+      select: {
+        id: true,
+        gameId: true,
+        sinnerId: true,
+        userIdentityId: true,
+      },
+    });
+
+    await prisma.gameRerollResults.updateMany({
+      where: {
+        rerollId,
+        userIdentityId: selectUserIdentityId,
+      },
+      data: {
+        appliedAt: new Date(),
+        appliedToDeckId: updated.id,
+      },
+    });
+
+    return {
+      gameId,
+      rerollId,
+      applied: {
+        sinnerId: targetSinnerId,
+        newUserIdentityId: selectUserIdentityId,
+        updatedDeckId: updated.id,
+      },
     };
   },
 };

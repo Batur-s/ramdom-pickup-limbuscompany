@@ -52,4 +52,31 @@ export const gamesController = {
 
     return res.status(201).json(result);
   },
+
+  async updateReroll(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+
+    const gameIdParam = req.params.gameId;
+    const gameId = Array.isArray(gameIdParam) ? gameIdParam[0] : gameIdParam;
+
+    const rerollIdParam = req.params.rerollId;
+    const rerollId = Array.isArray(rerollIdParam) ? rerollIdParam[0] : rerollIdParam;
+
+    const selectUserIdentityIdParam = req.body.selectUserIdentityId;
+    const selectUserIdentityId = Array.isArray(selectUserIdentityIdParam)
+      ? selectUserIdentityIdParam[0]
+      : selectUserIdentityIdParam;
+
+    if (!userId || !gameId || !rerollId || !selectUserIdentityId)
+      return res.status(400).json({ message: 'No data' });
+
+    const result = await gamesService.updateRerollForGame({
+      userId,
+      gameId,
+      rerollId,
+      selectUserIdentityId,
+    });
+
+    return res.status(201).json(result);
+  },
 };
