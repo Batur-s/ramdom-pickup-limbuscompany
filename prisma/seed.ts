@@ -4,17 +4,28 @@ import path from 'path';
 
 const prisma = new PrismaClient();
 
-function readIdentitiesJson() {
-  const filePath = path.join(process.cwd(), 'prisma', 'seed-data', 'identities.json');
+function readJsonFile<T>(fileName: string): T {
+  const filePath = path.join(process.cwd(), 'prisma', 'seed-data', fileName);
   const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw) as Array<{
-    id: string;
-    name: string;
-    sinnerId: string;
-    grade: number;
-    tier: keyof typeof Tier;
-  }>;
+  return JSON.parse(raw) as T;
 }
+
+type IdentitySeedRow = {
+  id: string;
+  name: string;
+  sinnerId: string;
+  grade: number;
+  tier: keyof typeof Tier;
+};
+
+type StageSeedRow = {
+  id: string;
+  name: string;
+  normalFloorA: number | null;
+  normalFloorB: number | null;
+  hardFloorA: number | null;
+  hardFloorB: number | null;
+};
 
 async function main() {
   console.log('🌱 시딩 시작...');
@@ -42,7 +53,7 @@ async function main() {
   }
   console.log('👥 수감자 데이터 완료');
 
-  const identitiesData = readIdentitiesJson();
+  const identitiesData = readJsonFile<IdentitySeedRow[]>('identities.json');
 
   for (const identity of identitiesData) {
     await prisma.identity.upsert({
@@ -62,6 +73,31 @@ async function main() {
       },
     });
   }
+  console.log('✅ identities 시딩 완료!');
+
+  const stagesData = readJsonFile<StageSeedRow[]>('stages.json');
+
+  for (const stage of stagesData) {
+    await prisma.stages.upsert({
+      where: { id: stage.id },
+      update: {
+        name: stage.name,
+        normalFloorA: stage.normalFloorA,
+        normalFloorB: stage.normalFloorB,
+        hardFloorA: stage.hardFloorA,
+        hardFloorB: stage.hardFloorB,
+      },
+      create: {
+        id: stage.id,
+        name: stage.name,
+        normalFloorA: stage.normalFloorA,
+        normalFloorB: stage.normalFloorB,
+        hardFloorA: stage.hardFloorA,
+        hardFloorB: stage.hardFloorB,
+      },
+    });
+  }
+  console.log('✅ stages 시딩 완료!');
 
   console.log('✅ 모든 시딩 완료!');
 }

@@ -81,7 +81,6 @@ model Games {
   gameRerolls GameRerolls[]
 }
 
-// 덱(초기 버전): 기존을 유지. 리롤 교체가 중요해지면 GameDecks를 슬롯 모델로 교체 권장.
 model GameDecks {
   id             String @id @default(cuid())
   gameId         String
