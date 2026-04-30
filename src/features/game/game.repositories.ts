@@ -167,7 +167,7 @@ export const gamesRepository = {
     const picked = weightedPick3Unique(mappedCandidates, tierWeight);
 
     const rerollIndex = await prisma.gameRerolls.count({
-      where: { gameId, floorNumber: game.currentFloor ?? (undefined as any) },
+      where: { gameId, floorNumber: game.currentFloor },
     });
 
     const newReroll = await prisma.$transaction(async (tx) => {
@@ -187,8 +187,8 @@ export const gamesRepository = {
           rerollId: reroll.id,
           identityId: p.identityId,
           userIdentityId: p.userIdentityId,
-          rolledTier: p.tier as any,
           rankInRoll: p.rankInRoll,
+          rolledTier: p.tier as any,
         })),
       });
 
@@ -201,8 +201,8 @@ export const gamesRepository = {
       candidates: picked.map((p) => ({
         identityId: p.identityId,
         userIdentityId: p.userIdentityId,
-        rolledTier: p.tier,
         rankInRoll: p.rankInRoll,
+        rolledTier: p.tier,
       })),
     };
   },

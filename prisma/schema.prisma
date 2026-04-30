@@ -37,7 +37,8 @@ model UserIdentity {
   user     User     @relation(fields: [userId], references: [id])
   identity Identity @relation(fields: [identityId], references: [id])
 
-  gameDecks GameDecks[]
+  gameDecks         GameDecks[]
+  gameRerollResults GameRerollResults[]
 
   @@unique([userId, identityId])
 }
@@ -123,8 +124,8 @@ model GameStages {
 model GameRerolls {
   id          String   @id @default(cuid())
   gameId      String
-  floorNumber Int? 
-  rerollIndex Int 
+  floorNumber Int?
+  rerollIndex Int
   createdAt   DateTime @default(now())
 
   probabilityModelVersion Int?
@@ -141,18 +142,21 @@ model GameRerollResults {
   id String @id @default(cuid())
 
   rerollId       String
-  identityId     String 
-  userIdentityId String 
+  identityId     String
+  userIdentityId String
   rankInRoll     Int?
+  rolledTier     Tier
 
   appliedAt       DateTime?
   appliedToDeckId String?
 
-  reroll   GameRerolls @relation(fields: [rerollId], references: [id])
-  identity Identity    @relation(fields: [identityId], references: [id])
-  user     User        @relation(fields: [userIdentityId], references: [id])
+  reroll       GameRerolls  @relation(fields: [rerollId], references: [id])
+  identity     Identity     @relation(fields: [identityId], references: [id])
+  userIdentity UserIdentity @relation(fields: [userIdentityId], references: [id])
 
   appliedToDeck GameDecks? @relation(fields: [appliedToDeckId], references: [id])
+  user          User?      @relation(fields: [userId], references: [id])
+  userId        String?
 
   @@unique([rerollId, identityId])
   @@index([identityId])
