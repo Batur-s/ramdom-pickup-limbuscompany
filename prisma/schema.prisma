@@ -111,7 +111,7 @@ model GameStages {
   gameId    String
   stageId   String
   floor     Int
-  diffculty Difficulty
+  difficulty Difficulty
 
   games  Games  @relation(fields: [gameId], references: [id])
   stages Stages @relation(fields: [stageId], references: [id])

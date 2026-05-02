@@ -1,6 +1,7 @@
 // features/game/game.service.ts
 import prisma from '../../lib/prisma';
 import { gamesRepository } from './game.repositories';
+import { GameStatus } from '@prisma/client';
 
 type DeckSlotInput = { sinnerId: string; userIdentityId: string };
 
@@ -76,5 +77,51 @@ export const gamesService = {
 
   async updateRerollForGame({ userId, gameId, rerollId, selectUserIdentityId }: UpdateRerollInput) {
     return gamesRepository.UpdateRerollInput({ userId, gameId, rerollId, selectUserIdentityId });
+  },
+
+  async getAvailableStages({
+    userId,
+    gameId,
+    difficulty,
+  }: {
+    userId: string;
+    gameId: string;
+    difficulty: 'NORMAL' | 'HARD';
+  }) {
+    return gamesRepository.getAvailableStagesForGame({ userId, gameId, difficulty });
+  },
+
+  async updateStages({
+    userId,
+    gameId,
+    stageId,
+    difficulty,
+  }: {
+    userId: string;
+    gameId: string;
+    stageId: string;
+    difficulty: 'NORMAL' | 'HARD';
+  }) {
+    return gamesRepository.updateStagesForGame({ userId, gameId, stageId, difficulty });
+  },
+
+  async advanceStage({ userId, gameId }: { userId: string; gameId: string }) {
+    return gamesRepository.updateFloorForGame({ userId, gameId });
+  },
+
+  async changeStatus({
+    userId,
+    gameId,
+    status,
+  }: {
+    userId: string;
+    gameId: string;
+    status: GameStatus;
+  }) {
+    return gamesRepository.updateStatusForGame({ userId, gameId, status });
+  },
+
+  async gameSummary({ userId, gameId }: { userId: string; gameId: string }) {
+    return gamesRepository.summaryGameForCommunity({ userId, gameId });
   },
 };

@@ -2,6 +2,8 @@
 import { Request, Response } from 'express';
 import { gamesService } from './game.services';
 import { getUserIdOrNull } from '../utils/getUserId';
+import { GameStatus } from '@prisma/client';
+import { json } from 'node:stream/consumers';
 
 export const gamesController = {
   async createGame(req: Request, res: Response) {
@@ -78,5 +80,71 @@ export const gamesController = {
     });
 
     return res.status(201).json(result);
+  },
+
+  async getAvailableStages(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+    const { difficulty } = req.query;
+
+    if (difficulty !== 'NORMAL' && difficulty !== 'HARD') {
+      return res.status(400).json({ message: 'difficulty must be NORMAL or HARD' });
+    }
+
+    const result = await gamesService.getAvailableStages({ userId, gameId, difficulty });
+
+    return res.json(result);
+  },
+
+  async updateStages(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+    const { stageId, difficulty } = req.body;
+
+    const result = await gamesService.updateStages({ userId, gameId, stageId, difficulty });
+
+    return res.json(result);
+  },
+
+  async advanceStage(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+
+    const result = await gamesService.advanceStage({ userId, gameId });
+
+    return res.json(result);
+  },
+
+  async changeStatus(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+    const { status } = req.body;
+
+    if (!Object.values(GameStatus).includes(status)) {
+      return res.status(400).json({ message: 'status must be CLEAR, FAILURE, or PAUSE' });
+    }
+
+    const result = await gamesService.changeStatus({ userId, gameId, status });
+
+    return res.json(result);
+  },
+
+  async summaryGames(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const gameId = req.params.gameId as string;
+
+    const result = await gamesService.gameSummary({ userId, gameId });
+
+    return res.json(result);
   },
 };

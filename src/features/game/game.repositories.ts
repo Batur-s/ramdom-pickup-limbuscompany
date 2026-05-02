@@ -1,7 +1,7 @@
 // features/game/game.repositories.ts
 import { truncate } from 'fs';
 import prisma from '../../lib/prisma';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, GameStatus } from '@prisma/client';
 
 type Tx = PrismaClient;
 
@@ -241,23 +241,6 @@ export const gamesRepository = {
     if (!selectResult) throw new Error('Select result not found');
     const targetSinnerId = selectResult.identity.sinnerId;
 
-    // const updated = await prisma.gameDecks.update({
-    //   where: {
-    //     gameId_sinnerId: {
-    //       gameId,
-    //       sinnerId: targetSinnerId,
-    //     },
-    //   },
-    //   data: {
-    //     userIdentityId: selectUserIdentityId,
-    //   },
-    //   select: {
-    //     id: true,
-    //     gameId: true,
-    //     sinnerId: true,
-    //     userIdentityId: true,
-    //   },
-    // });
     const deckRow = await prisma.gameDecks.findFirst({
       where: { gameId, sinnerId: targetSinnerId },
       select: { id: true },
@@ -296,5 +279,156 @@ export const gamesRepository = {
         updatedDeckId: updated.id,
       },
     };
+  },
+
+  async getAvailableStagesForGame({
+    userId,
+    gameId,
+    difficulty,
+  }: {
+    userId: string;
+    gameId: string;
+    difficulty: 'NORMAL' | 'HARD';
+  }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: { currentFloor: true },
+    });
+    if (!game) throw new Error('Game not found');
+
+    const floor = game.currentFloor;
+    const allStages = await prisma.stages.findMany();
+
+    const available = allStages.filter((stage) => {
+      const floorA = difficulty === 'NORMAL' ? stage.normalFloorA : stage.hardFloorA;
+      const floorB = difficulty === 'NORMAL' ? stage.normalFloorB : stage.hardFloorB;
+
+      if (floorA === null || floorA === 0) return false;
+      if (floorB === null || floorB === 0) return false;
+      if (floorB === 0) return floor === floorA;
+      return floor >= floorA && floor <= floorB;
+    });
+
+    return {
+      floor,
+      difficulty,
+      stages: available.map(({ id, name }) => ({ id, name })),
+    };
+  },
+
+  async updateStagesForGame({
+    userId,
+    gameId,
+    stageId,
+    difficulty,
+  }: {
+    userId: string;
+    gameId: string;
+    stageId: string;
+    difficulty: 'NORMAL' | 'HARD';
+  }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: { id: true, currentFloor: true },
+    });
+    if (!game) throw new Error('Game not found');
+
+    const selectStage = await prisma.stages.findFirst({
+      where: { id: stageId },
+      select: { id: true, name: true },
+    });
+    if (!selectStage) throw new Error('Stage not found');
+
+    const updated = await prisma.gameStages.create({
+      data: {
+        gameId,
+        stageId: selectStage.id,
+        floor: game.currentFloor,
+        difficulty: difficulty,
+      },
+      select: {
+        id: true,
+        gameId: true,
+        stageId: true,
+        floor: true,
+        difficulty: true,
+      },
+    });
+  },
+
+  async updateFloorForGame({ userId, gameId }: { userId: string; gameId: string }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: { id: true, currentFloor: true },
+    });
+    if (!game) throw new Error('Game not found');
+
+    return prisma.games.update({
+      where: { id: game.id },
+      data: { currentFloor: game.currentFloor + 1 },
+      select: { id: true, currentFloor: true },
+    });
+  },
+
+  async updateStatusForGame({
+    userId,
+    gameId,
+    status,
+  }: {
+    userId: string;
+    gameId: string;
+    status: GameStatus;
+  }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: { id: true, status: true },
+    });
+    if (!game) throw new Error('Game not found');
+
+    return prisma.games.update({
+      where: { id: game.id },
+      data: { status },
+      select: { id: true, status: true },
+    });
+  },
+
+  async summaryGameForCommunity({ userId, gameId }: { gameId: string; userId: string }) {
+    const game = await prisma.games.findFirst({
+      where: { id: gameId, userId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        currentFloor: true,
+        createdAt: true,
+        gameStages: {
+          select: {
+            floor: true,
+            difficulty: true,
+            stages: {
+              select: { id: true, name: true },
+            },
+          },
+          orderBy: { floor: 'asc' },
+        },
+
+        gameDecks: {
+          select: {
+            sinnerId: true,
+            userIdentity: {
+              select: {
+                syncGrade: true,
+                identity: {
+                  select: { id: true, name: true, tier: true, grade: true, imageUrl: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!game) throw new Error('Game not found');
+
+    return game;
   },
 };
