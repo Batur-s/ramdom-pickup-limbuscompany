@@ -13,4 +13,4 @@ gamesRouter.get('/:gameId/stages', requireAuth, gamesController.getAvailableStag
 gamesRouter.post('/:gameId/stages', requireAuth, gamesController.updateStages);
 gamesRouter.patch('/:gameId/advance', requireAuth, gamesController.advanceStage);
 gamesRouter.patch('/:gameId/status', requireAuth, gamesController.changeStatus);
-// gamesRouter.get('/:gameId/summary', requireAuth, gamesController.summaryGames);
+gamesRouter.get('/:gameId/summary', requireAuth, gamesController.summaryGames);
