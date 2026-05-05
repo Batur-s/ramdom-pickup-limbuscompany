@@ -124,4 +124,8 @@ export const gamesService = {
   async gameSummary({ userId, gameId }: { userId: string; gameId: string }) {
     return gamesRepository.summaryGameForCommunity({ userId, gameId });
   },
+
+  async getGamesByUserId({ userId }: { userId: string }) {
+    return gamesRepository.findGamesByUserId({ userId });
+  },
 };

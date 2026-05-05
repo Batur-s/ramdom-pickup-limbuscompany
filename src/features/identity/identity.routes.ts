@@ -7,3 +7,5 @@ export const meIdentitiesRouter = Router();
 
 meIdentitiesRouter.get('/', requireAuth, meIdentitiesController.getMeIdentities);
 meIdentitiesRouter.post('/', requireAuth, meIdentitiesController.postIdentities);
+meIdentitiesRouter.get('/all', requireAuth, meIdentitiesController.getAll);
+meIdentitiesRouter.delete('/:userIdentityId', requireAuth, meIdentitiesController.deleteIdentity);

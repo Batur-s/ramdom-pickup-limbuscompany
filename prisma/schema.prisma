@@ -59,6 +59,7 @@ model Identity {
 model Sinners {
   id   String @id @default(cuid())
   name String @unique
+  imageUrl String?
 
   identity Identity[]
 }

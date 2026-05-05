@@ -147,4 +147,12 @@ export const gamesController = {
 
     return res.json(result);
   },
+
+  async getGames(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const items = await gamesService.getGamesByUserId({ userId });
+    return res.json({ items });
+  },
 };

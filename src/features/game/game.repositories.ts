@@ -6,7 +6,13 @@ import { PrismaClient, GameStatus } from '@prisma/client';
 type Tx = PrismaClient;
 
 function weightedPick3Unique(
-  candidates: Array<{ userIdentityId: string; identityId: string; tier: string; grade: number }>,
+  candidates: Array<{
+    userIdentityId: string;
+    identityId: string;
+    tier: string;
+    grade: number;
+    name: string;
+  }>,
   tierWeight: Record<string, number>,
 ) {
   const remaining = [...candidates];
@@ -148,6 +154,7 @@ export const gamesRepository = {
             id: true,
             tier: true,
             grade: true,
+            name: true,
           },
         },
       },
@@ -159,6 +166,7 @@ export const gamesRepository = {
       identityId: c.identityId,
       tier: c.identity.tier,
       grade: c.identity.grade,
+      name: c.identity.name,
     }));
 
     if (mappedCandidates.length < 3) {
@@ -204,6 +212,7 @@ export const gamesRepository = {
         userIdentityId: p.userIdentityId,
         rankInRoll: p.rankInRoll,
         rolledTier: p.tier,
+        name: p.name,
       })),
     };
   },
@@ -304,8 +313,8 @@ export const gamesRepository = {
       const floorB = difficulty === 'NORMAL' ? stage.normalFloorB : stage.hardFloorB;
 
       if (floorA === null || floorA === 0) return false;
-      if (floorB === null || floorB === 0) return false;
-      if (floorB === 0) return floor === floorA;
+
+      if (floorB === null || floorB === 0) return floor === floorA;
       return floor >= floorA && floor <= floorB;
     });
 
@@ -354,6 +363,7 @@ export const gamesRepository = {
         difficulty: true,
       },
     });
+    return updated;
   },
 
   async updateFloorForGame({ userId, gameId }: { userId: string; gameId: string }) {
@@ -430,5 +440,19 @@ export const gamesRepository = {
     if (!game) throw new Error('Game not found');
 
     return game;
+  },
+
+  async findGamesByUserId({ userId }: { userId: string }) {
+    return prisma.games.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        currentFloor: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   },
 };

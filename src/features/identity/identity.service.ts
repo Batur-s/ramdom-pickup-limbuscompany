@@ -11,4 +11,12 @@ export const meIdentitiesService = {
 
     return meIdentitiesRepository.postIdentities(userId, identityIds);
   },
+
+  async getAllIdentities() {
+    return meIdentitiesRepository.findAll();
+  },
+
+  async deleteIdentity(userId: string, userIdentityId: string) {
+    return meIdentitiesRepository.deleteIdentity(userId, userIdentityId);
+  },
 };
