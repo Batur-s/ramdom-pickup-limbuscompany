@@ -1,138 +1,177 @@
 import { PrismaClient, Tier } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+
 const prisma = new PrismaClient();
+
+function readJsonFile<T>(fileName: string): T {
+  const filePath = path.join(process.cwd(), 'prisma', 'seed-data', fileName);
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(raw) as T;
+}
+
+type IdentitySeedRow = {
+  id: string;
+  name: string;
+  sinnerId: string;
+  grade: number;
+  tier: keyof typeof Tier;
+  imageUrl: string;
+};
+
+type StageSeedRow = {
+  id: string;
+  name: string;
+  normalFloorA: number | null;
+  normalFloorB: number | null;
+  hardFloorA: number | null;
+  hardFloorB: number | null;
+  imageUrl: string | null;
+};
 
 async function main() {
   console.log('🌱 시딩 시작...');
 
   const sinnersData = [
-    { id: 'sinner-1', name: '이상' },
-    { id: 'sinner-2', name: '파우스트' },
-    { id: 'sinner-3', name: '돈키호테' },
-    { id: 'sinner-4', name: '료슈' },
-    { id: 'sinner-5', name: '뫼르소' },
-    { id: 'sinner-6', name: '홍루' },
-    { id: 'sinner-7', name: '히스클리프' },
-    { id: 'sinner-8', name: '이스마엘' },
-    { id: 'sinner-9', name: '로쟈' },
-    { id: 'sinner-10', name: '싱클레어' },
-    { id: 'sinner-11', name: '오티스' },
-    { id: 'sinner-12', name: '그레고르' },
+    {
+      id: 'sinner-1',
+      name: '이상',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878555/284e74b6af8de303a9bd8c51a7a2530cfac4e75da6872608ad9ef1875675081c_lklp7p.webp',
+    },
+    {
+      id: 'sinner-2',
+      name: '파우스트',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878554/af996e2123de09630e9d41dbbbf97b1a8cc325541e4c5b804e87c83106bbeffa_in7slm.webp',
+    },
+    {
+      id: 'sinner-3',
+      name: '돈키호테',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878555/177cf4e646bd49ea30da48f90bb4ff81c074deee0fc8f64af55f0661365a2da7_fxgjsn.webp',
+    },
+    {
+      id: 'sinner-4',
+      name: '료슈',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878555/a330b09e1c22fe96d87646d08bbf40ed926edc6b89b0600db483954023d8de18_g5phx2.webp',
+    },
+    {
+      id: 'sinner-5',
+      name: '뫼르소',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878555/c3a97372123886afcc9c9052522ef32ff7a7e096b607441d8580f5371babb999_klniui.webp',
+    },
+    {
+      id: 'sinner-6',
+      name: '홍루',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878554/0efc946b8179e4118be00c432ad8cee71ecf700921ad6dff6e22b10c1a3b1c4b_hhxpsh.webp',
+    },
+    {
+      id: 'sinner-7',
+      name: '히스클리프',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878556/3f3e5c51313a553aa22880508a2b974b46f14eb43ceb56ca739ba7017282156a_xvmxsg.webp',
+    },
+    {
+      id: 'sinner-8',
+      name: '이스마엘',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878554/1df7baf1d2c387188c1e217aaef48c9145d76526120816a6ed979a24391b7b54_lnffw2.webp',
+    },
+    {
+      id: 'sinner-9',
+      name: '로쟈',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878557/051d6af94b23b28c3077337fff1d986e1104fdea37df271ac7e4cc6b8361934f_aihy2s.webp',
+    },
+    {
+      id: 'sinner-10',
+      name: '싱클레어',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878556/39676257627edb0ca3fc6c5abd3bc70588680a0b153e7038944f89ea02469094_jg9khf.webp',
+    },
+    {
+      id: 'sinner-11',
+      name: '오티스',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878557/bb413cb13bb8be2e944c45054fe0e95ae6590b8c38a78442d7d69337880c58e8_nzxgse.webp',
+    },
+    {
+      id: 'sinner-12',
+      name: '그레고르',
+      imageUrl:
+        'https://res.cloudinary.com/dp5elyh8p/image/upload/v1777878555/31932bb98ac64d1a0cd2bec2ade3caeb41afa82bd54786cc455b76df5d12dba8_ejjp6e.webp',
+    },
   ];
   for (const s of sinnersData) {
     await prisma.sinners.upsert({
       where: { id: s.id },
-      update: { name: s.name },
+      update: { name: s.name, imageUrl: s.imageUrl },
       create: s,
     });
   }
   console.log('👥 수감자 데이터 완료');
 
-  const identitiesData = [
-    {
-      id: 'id-1',
-      name: '검계 살수 이상',
-      sinnerId: 'sinner-1', // 위에서 만든 수감자 ID와 연결
-      grade: 3,
-      tier: Tier.S, // Prisma Enum 사용
-    },
-    {
-      id: 'id-2',
-      name: '쥐는 자 파우스트',
-      sinnerId: 'sinner-2',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-3',
-      name: 'W사 3등급 정리 요원 돈키호테',
-      sinnerId: 'sinner-3',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-4',
-      name: '흑운회 와카슈 로슈',
-      sinnerId: 'sinner-4',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-5',
-      name: 'W사 2등급 정리 요원 뫼르소',
-      sinnerId: 'sinner-5',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-6',
-      name: '콩콩이파 두목 홍루',
-      sinnerId: 'sinner-6',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-7',
-      name: 'R사 제 4무리 토끼팀 히스클리프',
-      sinnerId: 'sinner-7',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-8',
-      name: 'R사 제 4무리 순록팀 이스마엘',
-      sinnerId: 'sinner-8',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-9',
-      name: '흑운회 와카슈 로쟈',
-      sinnerId: 'sinner-9',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-10',
-      name: '검계 살수 싱클레어',
-      sinnerId: 'sinner-10',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-11',
-      name: '남부 세븐 협회 6과 부장 오티스',
-      sinnerId: 'sinner-11',
-      grade: 3,
-      tier: Tier.S,
-    },
-        {
-      id: 'id-12',
-      name: 'G사 일등대리 그레고르',
-      sinnerId: 'sinner-12',
-      grade: 3,
-      tier: Tier.S,
-    },
-  ];
+  const identitiesData = readJsonFile<IdentitySeedRow[]>('identities.json');
 
   for (const identity of identitiesData) {
     await prisma.identity.upsert({
       where: { id: identity.id },
       update: {
         name: identity.name,
-        tier: identity.tier,
+        sinnerId: identity.sinnerId,
+        grade: identity.grade,
+        tier: identity.tier as Tier,
+        imageUrl: identity.imageUrl,
       },
-      create: identity,
+      create: {
+        id: identity.id,
+        name: identity.name,
+        sinnerId: identity.sinnerId,
+        grade: identity.grade,
+        tier: identity.tier as Tier,
+        imageUrl: identity.imageUrl,
+      },
     });
   }
+  console.log('✅ identities 시딩 완료!');
+
+  const stagesData = readJsonFile<StageSeedRow[]>('stages.json');
+
+  for (const stage of stagesData) {
+    await prisma.stages.upsert({
+      where: { id: stage.id },
+      update: {
+        name: stage.name,
+        normalFloorA: stage.normalFloorA,
+        normalFloorB: stage.normalFloorB,
+        hardFloorA: stage.hardFloorA,
+        hardFloorB: stage.hardFloorB,
+        imageUrl: stage.imageUrl,
+      },
+      create: {
+        id: stage.id,
+        name: stage.name,
+        normalFloorA: stage.normalFloorA,
+        normalFloorB: stage.normalFloorB,
+        hardFloorA: stage.hardFloorA,
+        hardFloorB: stage.hardFloorB,
+        imageUrl: stage.imageUrl,
+      },
+    });
+  }
+  console.log('✅ stages 시딩 완료!');
 
   console.log('✅ 모든 시딩 완료!');
 }
 
 main()
   .catch((e) => {
-    // Prisma 에러인지 일반 에러인지 구분해서 출력해줍니다.
     console.error('❌ 시딩 중 에러 발생:');
-    console.error(e.message);
+    console.error((e as Error).message);
     process.exit(1);
   })
   .finally(async () => {

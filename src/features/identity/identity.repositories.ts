@@ -41,4 +41,31 @@ export const meIdentitiesRepository = {
       skipDuplicates: true,
     });
   },
+
+  async findAll() {
+    return prisma.identity.findMany({
+      select: {
+        id: true,
+        name: true,
+        tier: true,
+        grade: true,
+        sinnerId: true,
+        imageUrl: true,
+      },
+      orderBy: { sinnerId: 'asc' },
+    });
+  },
+
+  async updateSyncGrade(userId: string, userIdentityId: string, syncGrade: number) {
+    return prisma.userIdentity.updateMany({
+      where: { id: userIdentityId, userId },
+      data: { syncGrade },
+    });
+  },
+
+  async deleteIdentity(userId: string, userIdentityId: string) {
+    return prisma.userIdentity.deleteMany({
+      where: { id: userIdentityId, userId },
+    });
+  },
 };

@@ -8,4 +8,12 @@ export const userRepository = {
       select: { id: true, email: true, nickName: true, isNewUser: true, createdAt: true },
     });
   },
+
+  async updateNickName(userId: string, nickName: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { nickName },
+      select: { id: true, nickName: true },
+    });
+  },
 };

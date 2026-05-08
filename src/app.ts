@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import { meRouter } from './features/user/user.routes';
 import { meIdentitiesRouter } from './features/identity/identity.routes';
 import { gamesRouter } from './features/game/game.routes';
+import { sinnersRouter } from './features/sinner/sinner.routes';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: 'http://localhost:3001',
   optionsSuccessStatus: 200,
   credentials: true,
 };
@@ -34,6 +35,7 @@ app.use('/auth', authRoutes);
 app.use('/user', meRouter);
 app.use('/identity', meIdentitiesRouter);
 app.use('/game', gamesRouter);
+app.use('/sinner', sinnersRouter);
 
 export { app };
 export default app;

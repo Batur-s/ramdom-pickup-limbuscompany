@@ -24,7 +24,7 @@ router.get(
       maxAge: 3600000, 
     });
 
-    res.redirect('http://localhost:3000'); 
+    res.redirect('http://localhost:3001'); 
   }
 );
 
