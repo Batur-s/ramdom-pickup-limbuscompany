@@ -12,6 +12,7 @@ function weightedPick3Unique(
     tier: string;
     grade: number;
     name: string;
+    imageUrl: string | null;
   }>,
   tierWeight: Record<string, number>,
 ) {
@@ -113,13 +114,19 @@ export const gamesRepository = {
         },
       },
     });
-    return rows.map((r) => ({
-      gameDeckId: r.id,
-      sinnerId: r.sinnerId,
-      userIdentityId: r.userIdentityId,
-      syncGrade: r.userIdentity.syncGrade,
-      identity: r.userIdentity.identity,
-    }));
+    return rows
+      .map((r) => ({
+        gameDeckId: r.id,
+        sinnerId: r.sinnerId,
+        userIdentityId: r.userIdentityId,
+        syncGrade: r.userIdentity.syncGrade,
+        identity: r.userIdentity.identity,
+      }))
+      .sort((a, b) => {
+        const numA = parseInt(a.sinnerId.replace('sineer-', ''));
+        const numB = parseInt(b.sinnerId.replace('sineer-', ''));
+        return numA - numB;
+      });
   },
 
   async createRerollWithCandidates({
@@ -155,6 +162,7 @@ export const gamesRepository = {
             tier: true,
             grade: true,
             name: true,
+            imageUrl: true,
           },
         },
       },
@@ -167,6 +175,7 @@ export const gamesRepository = {
       tier: c.identity.tier,
       grade: c.identity.grade,
       name: c.identity.name,
+      imageUrl: c.identity.imageUrl,
     }));
 
     if (mappedCandidates.length < 3) {
@@ -213,6 +222,7 @@ export const gamesRepository = {
         rankInRoll: p.rankInRoll,
         rolledTier: p.tier,
         name: p.name,
+        imageUrl: p.imageUrl,
       })),
     };
   },
@@ -321,7 +331,7 @@ export const gamesRepository = {
     return {
       floor,
       difficulty,
-      stages: available.map(({ id, name }) => ({ id, name })),
+      stages: available.map(({ id, name, imageUrl }) => ({ id, name, imageUrl })),
     };
   },
 

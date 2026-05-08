@@ -66,8 +66,6 @@ export const gamesService = {
 
     const deck = await gamesRepository.getDeckIttemsForGame({ gameId });
 
-    deck.sort((a, b) => a.sinnerId.localeCompare(b.sinnerId));
-
     return deck;
   },
 

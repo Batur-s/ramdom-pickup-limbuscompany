@@ -56,6 +56,13 @@ export const meIdentitiesRepository = {
     });
   },
 
+  async updateSyncGrade(userId: string, userIdentityId: string, syncGrade: number) {
+    return prisma.userIdentity.updateMany({
+      where: { id: userIdentityId, userId },
+      data: { syncGrade },
+    });
+  },
+
   async deleteIdentity(userId: string, userIdentityId: string) {
     return prisma.userIdentity.deleteMany({
       where: { id: userIdentityId, userId },

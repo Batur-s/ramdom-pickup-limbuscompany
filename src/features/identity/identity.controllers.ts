@@ -40,4 +40,15 @@ export const meIdentitiesController = {
     await meIdentitiesService.deleteIdentity(userId, userIdentityId);
     return res.status(200).end();
   },
+
+  async updateSyncGrade(req: Request, res: Response) {
+    const userId = getUserIdOrNull(req);
+    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    const userIdentityId = req.params.userIdentityId as string;
+    const { syncGrade } = req.body;
+
+    const result = await meIdentitiesService.updateSyncGrade(userId, userIdentityId, syncGrade);
+    return res.json(result);
+  },
 };

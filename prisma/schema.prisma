@@ -103,6 +103,7 @@ model Stages {
   hardFloorA   Int?
   hardFloorB   Int?
   name         String
+  imageUrl     String?
 
   gameStages GameStages[]
 }

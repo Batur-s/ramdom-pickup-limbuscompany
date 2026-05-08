@@ -19,4 +19,9 @@ export const meIdentitiesService = {
   async deleteIdentity(userId: string, userIdentityId: string) {
     return meIdentitiesRepository.deleteIdentity(userId, userIdentityId);
   },
+
+  async updateSyncGrade(userId: string, userIdentityId: string, syncGrade: number) {
+    if (syncGrade < 1 || syncGrade > 5) throw new Error('syncGrade는 1~5 사이여야 해요');
+    return meIdentitiesRepository.updateSyncGrade(userId, userIdentityId, syncGrade);
+  },
 };

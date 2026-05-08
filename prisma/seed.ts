@@ -26,6 +26,7 @@ type StageSeedRow = {
   normalFloorB: number | null;
   hardFloorA: number | null;
   hardFloorB: number | null;
+  imageUrl: string | null;
 };
 
 async function main() {
@@ -149,6 +150,7 @@ async function main() {
         normalFloorB: stage.normalFloorB,
         hardFloorA: stage.hardFloorA,
         hardFloorB: stage.hardFloorB,
+        imageUrl: stage.imageUrl,
       },
       create: {
         id: stage.id,
@@ -157,6 +159,7 @@ async function main() {
         normalFloorB: stage.normalFloorB,
         hardFloorA: stage.hardFloorA,
         hardFloorB: stage.hardFloorB,
+        imageUrl: stage.imageUrl,
       },
     });
   }
