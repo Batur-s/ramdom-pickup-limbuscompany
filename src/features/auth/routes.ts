@@ -12,20 +12,13 @@ router.get(
   (req, res) => {
     const user = req.user as any;
 
-    const accessToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: '1h' } 
-    );
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
-      maxAge: 3600000, 
+    const accessToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET!, {
+      expiresIn: '1h',
     });
 
-    res.redirect('http://localhost:3001'); 
-  }
+    // 쿠키 대신 URL 파라미터로 토큰 전달
+    res.redirect(`https://ramdom-pickup-limbuscompany-fronten.vercel.app/?token=${accessToken}`);
+  },
 );
 
 export default router;

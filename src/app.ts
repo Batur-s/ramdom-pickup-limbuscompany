@@ -16,19 +16,16 @@ const app = express();
 
 app.use(cookieParser());
 
-// JWT 인증도 쿠키 기반으로 쓸 예정이면 keep
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
-  origin: 'http://localhost:3001',
-  optionsSuccessStatus: 200,
+  origin: ['http://localhost:3001', 'https://ramdom-pickup-limbuscompany-fronten.vercel.app', 'https://ramdom-pickup-limbuscompany-frontend-ghomofayx.vercel.app'],
   credentials: true,
 };
+
 app.use(cors(corsOptions));
 
-// passport는 OAuth/strategy를 쓰는 라우트에서만 필요해도,
-// initialize는 app 단에서 한 번만 해주면 충분
 app.use(passport.initialize());
 
 app.use('/auth', authRoutes);
