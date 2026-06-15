@@ -20,7 +20,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
-  origin: ['http://localhost:3001', 'https://ramdom-pickup-limbuscompany-fronten.vercel.app', 'https://ramdom-pickup-limbuscompany-frontend-ghomofayx.vercel.app'],
+  origin: (origin: string | undefined, callback: Function) => {
+    if (
+      !origin ||
+      origin.includes('localhost') ||
+      origin.includes('vercel.app')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 };
 

@@ -2,6 +2,9 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
 import prisma from './../lib/prisma';
 
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '있음' : '없음');
+console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '있음' : '없음');
+
 passport.use(
   new GoogleStrategy(
     {
